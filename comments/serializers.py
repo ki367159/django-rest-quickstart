@@ -4,5 +4,5 @@ from .models import Comment
 class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
-        fields = '__all__'
-        read_only_fields = ['creator', 'create_at']
+        exclude = ['creator']
+        read_only_fields = ['creat_at']

@@ -19,11 +19,14 @@ from rest_framework.routers import DefaultRouter
 from categories.views import CategoryViewSet
 from comments.views import CommentViewSet
 from posts.views import PostViewSet
+from users.views import UserViewSet
+
 
 router = DefaultRouter(False)
 router.register('categories', CategoryViewSet)
 router.register('comments', CommentViewSet)
 router.register('posts', PostViewSet)
+router.register('users', UserViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
