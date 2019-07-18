@@ -1,3 +1,4 @@
+import time
 from rest_framework.exceptions import NotFound, PermissionDenied
 from django.contrib.auth import authenticate
 from django.contrib.auth.tokens import default_token_generator
@@ -5,13 +6,14 @@ from django.utils.http import urlsafe_base64_decode
 from rest_framework.generics import get_object_or_404
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.exceptions import AuthenticationFailed, NotFound
-from rest_framework.permissions import IsAdminUser
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 
+from .permissions import IsCurrentUser
 from .models import User
-from .serializers import UserSerializer, LoginSerializer, PasswordSetSerializer
+from .serializers import UserSerializer, LoginSerializer, PasswordSetSerializer, PasswordResetSerializers
 
 
 class UserViewSet(ModelViewSet):
@@ -22,7 +24,8 @@ class UserViewSet(ModelViewSet):
     def get_serializer_class(self):
         return {
             'login': LoginSerializer,
-            'set_password': PasswordSetSerializer
+            'set_password': PasswordSetSerializer,
+            'reset_password': PasswordResetSerializers
         }.get(self.action, super().get_serializer_class())
 
     def perform_create(self, serializer):
@@ -32,6 +35,10 @@ class UserViewSet(ModelViewSet):
     def get_permissions(self):
         if self.action == 'create':
             return []
+
+        if self.action in ['update', 'partial_update']:
+            return [IsCurrentUser()]
+
         return super().get_permissions()
 
     @action(['POST'], False, permission_classes=[])
@@ -60,12 +67,13 @@ class UserViewSet(ModelViewSet):
             raise NotFound()
 
         user = get_object_or_404(User, pk=uid)
+        request.user = user
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         if not default_token_generator.check_token(user, token):
-            raise PermissionDenied()
+            raise PermissionDenied('Token check fail.')
 
         user.set_password(serializer.data['password'])
         user.save()
@@ -73,3 +81,23 @@ class UserViewSet(ModelViewSet):
         return Response({
             'success': True,
         })
+
+    @action(['POST'], False, permission_classes=[])
+    def password_reset(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = User.objects.filter(email=serializer.data['email']).first()
+        if not user:
+            time.sleep(3)
+        else:
+            user.send_password_set_email()
+
+        return Response({
+            'success': True,
+        })
+
+    @action(['GET'], False, permission_classes=[IsAuthenticated])
+    def me(self, request):
+        serializer = self.get_serializer(request.user)
+        return Response(serializer.data)

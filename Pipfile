@@ -12,6 +12,11 @@ djangorestframework = "*"
 django-environ = "*"
 django-extensions = "*"
 django-filter = "*"
+pillow = "*"
+django-cleanup = "*"
+coreapi = "*"
+djangorestframework-camel-case = "*"
+six = "*"
 
 [requires]
 python_version = "3.7"

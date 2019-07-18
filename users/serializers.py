@@ -17,6 +17,7 @@ class UserSerializer(serializers.ModelSerializer):
             'is_superuser',
             'is_staff',
             'is_active',
+            'image',
         ]
 
 
@@ -29,6 +30,8 @@ class PasswordSetSerializer(serializers.Serializer):
     password_confirm = serializers.CharField()
 
     def validate(self, attrs):
+        user = self.context['request'].user
+
         if attrs['password'] != attrs['password_confirm']:
             raise serializers.ValidationError({
                 'password': 'Password not match.',
@@ -36,10 +39,14 @@ class PasswordSetSerializer(serializers.Serializer):
             })
 
         try:
-            validate_password(attrs['password'])
+            validate_password(attrs['password'], user)
         except ValidationError as e:
             raise serializers.ValidationError({
                 'password': e.messages,
             })
 
         return attrs
+
+
+class PasswordResetSerializers(serializers.Serializer):
+    email = serializers.EmailField()
