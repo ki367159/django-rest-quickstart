@@ -1,0 +1,17 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+ipython = "*"
+
+[packages]
+django = "*"
+djangorestframework = "*"
+django-environ = "*"
+django-extensions = "*"
+django-filter = "*"
+
+[requires]
+python_version = "3.7"
